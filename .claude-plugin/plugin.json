@@ -4,11 +4,12 @@
   "description": "Retrieve masked card details (PAN/CVV) from Reah using an access key. Handles secure session generation, fetch, and decryption for agents.",
   "author": {
     "name": "Reah",
-    "email": ""
+    "email": "support@reah.com",
+    "url": "https://agents.reah.com"
   },
-  "homepage": "",
+  "homepage": "https://agents.reah.com",
   "repository": "https://github.com/ReahPlatform/skills",
-  "license": "",
+  "license": "MIT",
   "keywords": ["reah", "card", "agent"],
   "skills": "./skills/reah/"
 }

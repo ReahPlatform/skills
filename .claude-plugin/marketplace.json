@@ -1,0 +1,29 @@
+{
+  "name": "reah-plugins",
+  "owner": {
+    "name": "Reah",
+    "email": ""
+  },
+  "metadata": {
+    "description": "Official Reah skills for Claude Code",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "reah",
+      "source": "./",
+      "description": "Retrieve masked card details (PAN/CVV) from Reah using an access key. Handles secure session generation, fetch, and decryption for agents.",
+      "version": "1.0.0",
+      "author": {
+        "name": "Reah",
+        "email": ""
+      },
+      "homepage": "",
+      "repository": "https://github.com/ReahPlatform/skills",
+      "license": "",
+      "keywords": ["reah", "card", "agent"],
+      "category": "external-integrations",
+      "tags": ["reah", "cards"]
+    }
+  ]
+}

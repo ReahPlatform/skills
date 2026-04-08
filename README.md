@@ -1,5 +1,7 @@
 # Reah Skills
 
+![Reah Skills](assets/reah-skill-github-cover.png)
+
 > Skill bundle for Reah agent workflows.
 
 ## Quick Start

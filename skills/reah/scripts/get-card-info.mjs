@@ -3,34 +3,26 @@ import { decryptSecret, generateSessionId, REAH_CARD_RSA_PUBLIC_KEY } from "./cr
 
 const DEFAULT_ENDPOINT = "https://agents.reah.com/graphql";
 
-const FETCH_BY_ACCESS_KEY_QUERY = `query FetchByAccessKey($accessKey: String!, $sessionId: String!) {
+const FETCH_CARD_INFO_BY_ACCESS_KEY_QUERY = `query FetchByAccessKey($accessKey: String!, $sessionId: String!) {
   individualCardByAccessKey(accessKey: $accessKey, sessionId: $sessionId) {
-    encryptedPan { iv data }
-    encryptedCvc { iv data }
+    cardInfoPartA: encryptedPan { iv data }
+    cardInfoPartB: encryptedCvc { iv data }
   }
 }`;
 
 function usage() {
   process.stderr.write(`Usage:
-  node get-pan-cvv.mjs --access-key <key> [options]
+  node get-card-info.mjs --access-key <key> [options]
 
 Options:
-  --endpoint <url>        GraphQL endpoint (default: ${DEFAULT_ENDPOINT})
-  --auth-bearer <token>   Add Authorization: Bearer <token>
-  --cookie <cookie>       Add Cookie header
-  --header <k:v>          Extra header, can repeat
   --secret <hex>          Optional fixed secret (hex) for session generation
   --timeout-ms <ms>       Request timeout (default: 15000)
-  --json                  Print JSON output instead of plain text
 `);
 }
 
 function parseArgs(argv) {
   const opts = {
-    endpoint: DEFAULT_ENDPOINT,
     timeoutMs: 15000,
-    headers: [],
-    json: false,
   };
 
   for (let i = 0; i < argv.length; i += 1) {
@@ -39,26 +31,11 @@ function parseArgs(argv) {
       case "--access-key":
         opts.accessKey = argv[++i];
         break;
-      case "--endpoint":
-        opts.endpoint = argv[++i];
-        break;
-      case "--auth-bearer":
-        opts.authBearer = argv[++i];
-        break;
-      case "--cookie":
-        opts.cookie = argv[++i];
-        break;
-      case "--header":
-        opts.headers.push(argv[++i]);
-        break;
       case "--secret":
         opts.secret = argv[++i];
         break;
       case "--timeout-ms":
         opts.timeoutMs = Number.parseInt(argv[++i], 10);
-        break;
-      case "--json":
-        opts.json = true;
         break;
       case "-h":
       case "--help":
@@ -79,53 +56,37 @@ function parseArgs(argv) {
   return opts;
 }
 
-function buildHeaders(opts) {
-  const headers = {
+function buildHeaders() {
+  return {
     "content-type": "application/json",
   };
-  if (opts.authBearer) {
-    headers.authorization = `Bearer ${opts.authBearer}`;
-  }
-  if (opts.cookie) {
-    headers.cookie = opts.cookie;
-  }
-  for (const header of opts.headers) {
-    const idx = header.indexOf(":");
-    if (idx <= 0) {
-      throw new Error(`invalid --header value: ${header}`);
-    }
-    const key = header.slice(0, idx).trim();
-    const value = header.slice(idx + 1).trim();
-    if (!key) {
-      throw new Error(`invalid header key in --header: ${header}`);
-    }
-    headers[key] = value;
-  }
-  return headers;
 }
 
 function parseEncryptedPayload(json) {
   const result = json?.data?.individualCardByAccessKey;
-  if (!result?.encryptedPan?.iv || !result?.encryptedPan?.data) {
+  if (!result?.cardInfoPartA?.iv || !result?.cardInfoPartA?.data) {
     return null;
   }
-  if (!result?.encryptedCvc?.iv || !result?.encryptedCvc?.data) {
+  if (!result?.cardInfoPartB?.iv || !result?.cardInfoPartB?.data) {
     return null;
   }
   return {
-    encryptedPan: result.encryptedPan,
-    encryptedCvc: result.encryptedCvc,
+    encryptedCardInfoPartA: result.cardInfoPartA,
+    encryptedCardInfoPartB: result.cardInfoPartB,
   };
 }
 
 async function postGraphQL(endpoint, headers, variables, timeoutMs) {
+  if (endpoint !== DEFAULT_ENDPOINT) {
+    throw new Error("Custom endpoint is not allowed for security reasons");
+  }
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const resp = await fetch(endpoint, {
       method: "POST",
       headers,
-      body: JSON.stringify({ query: FETCH_BY_ACCESS_KEY_QUERY, variables }),
+      body: JSON.stringify({ query: FETCH_CARD_INFO_BY_ACCESS_KEY_QUERY, variables }),
       signal: controller.signal,
     });
 
@@ -149,7 +110,7 @@ async function postGraphQL(endpoint, headers, variables, timeoutMs) {
 async function main() {
   try {
     const opts = parseArgs(process.argv.slice(2));
-    const headers = buildHeaders(opts);
+    const headers = buildHeaders();
 
     const { secretKey, sessionId } = await generateSessionId(
       REAH_CARD_RSA_PUBLIC_KEY,
@@ -157,7 +118,7 @@ async function main() {
     );
 
     const json = await postGraphQL(
-      opts.endpoint,
+      DEFAULT_ENDPOINT,
       headers,
       {
         accessKey: opts.accessKey,
@@ -171,33 +132,18 @@ async function main() {
       throw new Error(`GraphQL query failed: ${JSON.stringify(json?.errors ?? json)}`);
     }
 
-    const pan = await decryptSecret(
-      encrypted.encryptedPan.data,
-      encrypted.encryptedPan.iv,
+    const cardInfoPartA = await decryptSecret(
+      encrypted.encryptedCardInfoPartA.data,
+      encrypted.encryptedCardInfoPartA.iv,
       secretKey,
     );
-    const cvv = await decryptSecret(
-      encrypted.encryptedCvc.data,
-      encrypted.encryptedCvc.iv,
+    const cardInfoPartB = await decryptSecret(
+      encrypted.encryptedCardInfoPartB.data,
+      encrypted.encryptedCardInfoPartB.iv,
       secretKey,
     );
 
-    if (opts.json) {
-      process.stdout.write(
-        `${JSON.stringify(
-          {
-            pan,
-            cvv,
-            sessionId,
-          },
-          null,
-          2,
-        )}\n`,
-      );
-      return;
-    }
-
-    process.stdout.write(`PAN=${pan}\nCVV=${cvv}\n`);
+    process.stdout.write(`${cardInfoPartA}: ${cardInfoPartB}\n`);
   } catch (err) {
     process.stderr.write(`${err.message}\n`);
     process.exit(1);

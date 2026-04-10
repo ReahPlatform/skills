@@ -40,7 +40,7 @@ Start with a simple prompt:
 Use my Reah card to buy a Claude subscription for yourself.
 ```
 
-That's it. After setup, the agent can use your configured keys to retrieve and use card details automatically.
+That's it. After setup, the agent can use your configured keys to retrieve and use card info automatically.
 
 ---
 
@@ -73,7 +73,7 @@ That's it. After setup, the agent can use your configured keys to retrieve and u
                      │                 │                       │            │
                      │  ┌──────────────▼───────────────────────▼─────────┐ │
                      │  │              Local Script Runtime               │ │
-                     │  │ get-pan-cvv · session-id · fetch · decrypt     │ │
+                     │  │ get-card-info · session-id · fetch · decrypt   │ │
                      │  └──────────────────────────┬──────────────────────┘ │
                      │                             │                        │
                      │  ┌──────────────────────────▼──────────────────────┐ │

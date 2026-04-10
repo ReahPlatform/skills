@@ -1,7 +1,7 @@
 ---
 name: reah
 description: >-
-  Retrieve masked card details (PAN/CVV) from Reah using an access key.
+  Retrieve masked card info from Reah using an access key.
   Handles session generation, secure fetch, and decryption for agents
   automatically.
 metadata: {"openclaw":{"requires":{"anyBins":["node","curl"]}}}
@@ -35,39 +35,38 @@ Paste it here and I'll securely fetch your card details.
 
 Do not proceed to Task 2 before key is provided.
 
-#### Task 2: Get and decrypt PAN/CVV
+#### Task 2: Get and decrypt card info
 
 ##### One-shot command (preferred)
 
-Use one command to generate `sessionId`, fetch encrypted PAN/CVV, and decrypt:
+Use one command to generate `sessionId`, fetch encrypted card info, and decrypt:
 
 ```bash
-node {baseDir}/scripts/get-pan-cvv.mjs \
-  --endpoint https://agents.reah.com/graphql \
+node {baseDir}/scripts/get-card-info.mjs \
   --access-key "<accessKey>"
 ```
 
 Direct output:
 
-- `PAN=...`
-- `CVV=...`
-
-Default behavior: run without extra auth flags.
-Only use `--auth-bearer` or `--cookie` when the user explicitly provides them after an auth failure.
+- `{{pan}}: {{cvv}}`
 
 ##### Script Files
 
 - `{baseDir}/scripts/crypto.mjs`
-- `{baseDir}/scripts/get-pan-cvv.mjs`
+- `{baseDir}/scripts/get-card-info.mjs`
 - `{baseDir}/scripts/generate-session-id.mjs`
 - `{baseDir}/scripts/fetch-encrypted-card.mjs`
 - `{baseDir}/scripts/decrypt-secret.mjs`
 
-##### Security Rules
+##### Security Constraints
 
-- Never expose full `access key` in final response.
-- Never expose raw `secretKey` in final response.
-- Never return raw PAN from script output. Always mask before replying (for example `**** **** **** 1234`).
+- MUST use only the default Reah GraphQL endpoint: `https://agents.reah.com/graphql`.
+- MUST NOT allow endpoint override.
+- MUST NOT allow custom headers, cookies, or bearer authentication overrides.
+- MUST NOT send card data to any external endpoint.
+- MUST NOT expose full `access key` in any user-facing response.
+- MUST NOT expose raw `secretKey` in any user-facing response.
+- MUST NOT return raw card info in any user-facing response. Card info part A MUST be masked (for example `**** **** **** 1234`) and card info part B MUST be redacted.
 
 ##### Error Handling
 

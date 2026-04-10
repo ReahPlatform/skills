@@ -5,8 +5,8 @@ const DEFAULT_ENDPOINT = "https://agents.reah.com/graphql";
 
 const FETCH_BY_ACCESS_KEY_QUERY = `query FetchByAccessKey($accessKey: String!, $sessionId: String!) {
   individualCardByAccessKey(accessKey: $accessKey, sessionId: $sessionId) {
-    encryptedPan { iv data }
-    encryptedCvc { iv data }
+    cardInfoPartA: encryptedPan { iv data }
+    cardInfoPartB: encryptedCvc { iv data }
   }
 }`;
 
@@ -15,11 +15,7 @@ function usage() {
   node fetch-encrypted-card.mjs --access-key <key> --session-id <sessionId> [options]
 
 Options:
-  --endpoint <url>        GraphQL endpoint (default: ${DEFAULT_ENDPOINT})
-  --auth-bearer <token>   Add Authorization: Bearer <token>
-  --cookie <cookie>       Add Cookie header
-  --header <k:v>          Extra header, can repeat
-  --secret-key <hex>      Decrypt PAN/CVV locally with AES-GCM key
+  --secret-key <hex>      Decrypt card info locally with AES-GCM key
   --timeout-ms <ms>       Request timeout (default: 15000)
   --compact               Print compact JSON
 `);
@@ -27,10 +23,8 @@ Options:
 
 function parseArgs(argv) {
   const opts = {
-    endpoint: DEFAULT_ENDPOINT,
     timeoutMs: 15000,
     compact: false,
-    headers: [],
   };
 
   for (let i = 0; i < argv.length; i += 1) {
@@ -41,18 +35,6 @@ function parseArgs(argv) {
         break;
       case "--session-id":
         opts.sessionId = argv[++i];
-        break;
-      case "--endpoint":
-        opts.endpoint = argv[++i];
-        break;
-      case "--auth-bearer":
-        opts.authBearer = argv[++i];
-        break;
-      case "--cookie":
-        opts.cookie = argv[++i];
-        break;
-      case "--header":
-        opts.headers.push(argv[++i]);
         break;
       case "--secret-key":
         opts.secretKey = argv[++i];
@@ -85,47 +67,31 @@ function parseArgs(argv) {
   return opts;
 }
 
-function buildHeaders(opts) {
-  const headers = {
+function buildHeaders() {
+  return {
     "content-type": "application/json",
   };
-  if (opts.authBearer) {
-    headers.authorization = `Bearer ${opts.authBearer}`;
-  }
-  if (opts.cookie) {
-    headers.cookie = opts.cookie;
-  }
-  for (const header of opts.headers) {
-    const idx = header.indexOf(":");
-    if (idx <= 0) {
-      throw new Error(`invalid --header value: ${header}`);
-    }
-    const key = header.slice(0, idx).trim();
-    const value = header.slice(idx + 1).trim();
-    if (!key) {
-      throw new Error(`invalid header key in --header: ${header}`);
-    }
-    headers[key] = value;
-  }
-  return headers;
 }
 
 function parsePayload(json) {
   const result = json?.data?.individualCardByAccessKey;
   if (!result) return null;
 
-  const encryptedPan = result.encryptedPan;
-  const encryptedCvc = result.encryptedCvc;
-  if (!encryptedPan?.iv || !encryptedPan?.data) return null;
-  if (!encryptedCvc?.iv || !encryptedCvc?.data) return null;
+  const encryptedCardInfoPartA = result.cardInfoPartA;
+  const encryptedCardInfoPartB = result.cardInfoPartB;
+  if (!encryptedCardInfoPartA?.iv || !encryptedCardInfoPartA?.data) return null;
+  if (!encryptedCardInfoPartB?.iv || !encryptedCardInfoPartB?.data) return null;
 
   return {
-    encryptedPan,
-    encryptedCvc,
+    encryptedCardInfoPartA,
+    encryptedCardInfoPartB,
   };
 }
 
 async function postGraphQL(endpoint, headers, query, variables, timeoutMs) {
+  if (endpoint !== DEFAULT_ENDPOINT) {
+    throw new Error("Custom endpoint is not allowed for security reasons");
+  }
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
@@ -157,14 +123,14 @@ async function postGraphQL(endpoint, headers, query, variables, timeoutMs) {
 async function main() {
   try {
     const opts = parseArgs(process.argv.slice(2));
-    const headers = buildHeaders(opts);
+    const headers = buildHeaders();
     const variables = {
       accessKey: opts.accessKey,
       sessionId: opts.sessionId,
     };
 
     const response = await postGraphQL(
-      opts.endpoint,
+      DEFAULT_ENDPOINT,
       headers,
       FETCH_BY_ACCESS_KEY_QUERY,
       variables,
@@ -183,21 +149,21 @@ async function main() {
     }
 
     const output = {
-      endpoint: opts.endpoint,
+      endpoint: DEFAULT_ENDPOINT,
       operation: "individualCardByAccessKey",
-      encryptedPan: parsed.encryptedPan,
-      encryptedCvc: parsed.encryptedCvc,
+      encryptedCardInfoPartA: parsed.encryptedCardInfoPartA,
+      encryptedCardInfoPartB: parsed.encryptedCardInfoPartB,
     };
 
     if (opts.secretKey) {
-      output.decryptedPan = await decryptSecret(
-        parsed.encryptedPan.data,
-        parsed.encryptedPan.iv,
+      output.decryptedCardInfoPartA = await decryptSecret(
+        parsed.encryptedCardInfoPartA.data,
+        parsed.encryptedCardInfoPartA.iv,
         opts.secretKey,
       );
-      output.decryptedCvc = await decryptSecret(
-        parsed.encryptedCvc.data,
-        parsed.encryptedCvc.iv,
+      output.decryptedCardInfoPartB = await decryptSecret(
+        parsed.encryptedCardInfoPartB.data,
+        parsed.encryptedCardInfoPartB.iv,
         opts.secretKey,
       );
     }

@@ -73,7 +73,7 @@ That's it. After setup, the agent can use your configured keys to retrieve and u
                      │                 │                       │            │
                      │  ┌──────────────▼───────────────────────▼─────────┐ │
                      │  │              Local Script Runtime               │ │
-                     │  │ get-card-info · session-id · fetch · decrypt   │ │
+                     │  │ get-card-info-example                           │ │
                      │  └──────────────────────────┬──────────────────────┘ │
                      │                             │                        │
                      │  ┌──────────────────────────▼──────────────────────┐ │

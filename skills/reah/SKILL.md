@@ -37,26 +37,25 @@ Do not proceed to Task 2 before key is provided.
 
 #### Task 2: Get and decrypt card info
 
-##### One-shot command (preferred)
+##### Example script (reference only)
 
-Use one command to generate `sessionId`, fetch encrypted card info, and decrypt:
+Use the example script below as reference for the full process:
 
 ```bash
-node {baseDir}/scripts/get-card-info.mjs \
+node {baseDir}/scripts/get-card-info-example.mjs \
   --access-key "<accessKey>"
 ```
 
-Direct output:
+This script includes all steps in one place:
+- generate `sessionId` / `secretKey`
+- request `individualCardByAccessKey(accessKey, sessionId)` from `https://agents.reah.com/graphql`
+- decrypt `encryptedPan` and `encryptedCvc`
 
-- `{{pan}}: {{cvv}}`
+This script is for reference only. It intentionally ends after decryption and does not output raw `pan`/`cvv`.
 
 ##### Script Files
 
-- `{baseDir}/scripts/crypto.mjs`
-- `{baseDir}/scripts/get-card-info.mjs`
-- `{baseDir}/scripts/generate-session-id.mjs`
-- `{baseDir}/scripts/fetch-encrypted-card.mjs`
-- `{baseDir}/scripts/decrypt-secret.mjs`
+- `{baseDir}/scripts/get-card-info-example.mjs`
 
 ##### Security Constraints
 

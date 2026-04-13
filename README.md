@@ -6,7 +6,7 @@
 
 ## Quick Start
 
-Get started in three steps: install the skill, configure your card keys, and run a prompt.
+Get started in three steps: install the skill, provide an access key at runtime, and run a prompt.
 
 ### 1. Install
 
@@ -16,31 +16,21 @@ Install the Reah skill bundle into your agent environment:
 npx skills add https://github.com/ReahPlatform/skills
 ```
 
-### 2. Configure
+### 2. Provide Access Key at Runtime
 
-Add your Reah access keys to the agent environment.  
-Map each card nickname to the corresponding access key:
+When the agent needs card info, provide a Reah card `access key` in the current conversation.
 
-```json
-{
-  "env": {
-    "REAH_AGENT_KEYS": {
-      "cardNickName1": "accessKey1",
-      "cardNickName2": "accessKey2"
-    }
-  }
-}
-```
+Default usage does not require any environment variable for storing card access keys.
 
 ### 3. Try It
 
 Start with a simple prompt:
 
 ```text
-Use my Reah card to buy a Claude subscription for yourself.
+I will provide a Reah access key for this request. Use it to complete my payment task.
 ```
 
-That's it. After setup, the agent can use your configured keys to retrieve and use card info automatically.
+That's it. The agent should request an access key when needed and use it only for the current task.
 
 ---
 
@@ -67,11 +57,11 @@ That's it. After setup, the agent can use your configured keys to retrieve and u
 │   AI Agent    │───▶│                    Reah Platform Layer              │
 │ (Claude, etc) │    │                                                      │
 └───────────────┘    │  ┌──────────────────────────┐  ┌──────────────────┐  │
-                     │  │        Reah Skill        │  │   Key Registry   │  │
-                     │  │      (skills/reah)       │  │ REAH_AGENT_KEYS  │  │
-                     │  └──────────────┬───────────┘  └────────┬─────────┘  │
-                     │                 │                       │            │
-                     │  ┌──────────────▼───────────────────────▼─────────┐ │
+                     │  │        Reah Skill        │                       │
+                     │  │      (skills/reah)       │                       │
+                     │  └──────────────┬───────────┘                       │
+                     │                 │                                    │
+                     │  ┌──────────────▼──────────────────────────────────┐ │
                      │  │              Local Script Runtime               │ │
                      │  │ get-card-info-example                           │ │
                      │  └──────────────────────────┬──────────────────────┘ │

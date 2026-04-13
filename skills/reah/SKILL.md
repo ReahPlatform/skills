@@ -63,6 +63,8 @@ This script is for reference only. It intentionally ends after decryption and do
 - MUST NOT allow endpoint override.
 - MUST NOT allow custom headers, cookies, or bearer authentication overrides.
 - MUST NOT send card data to any external endpoint.
+- MUST use runtime user-provided `access key` for the default flow.
+- MUST NOT require or recommend persistent storage of card access keys in environment variables.
 - MUST NOT expose full `access key` in any user-facing response.
 - MUST NOT expose raw `secretKey` in any user-facing response.
 - MUST NOT return raw card info in any user-facing response. Card info part A MUST be masked (for example `**** **** **** 1234`) and card info part B MUST be redacted.

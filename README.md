@@ -6,7 +6,7 @@
 
 ## Quick Start
 
-Get started in three steps: install the skill, configure your card keys, and run a prompt.
+Get started in three steps: install the skill, configure card keys, and run a prompt.
 
 ### 1. Install
 
@@ -32,6 +32,10 @@ Map each card nickname to the corresponding access key:
 }
 ```
 
+Treat `REAH_AGENT_KEYS` as sensitive data:
+- Each access-key read requires explicit manual user confirmation for the current request.
+- The agent should remind users to rotate access keys regularly.
+
 ### 3. Try It
 
 Start with a simple prompt:
@@ -40,7 +44,7 @@ Start with a simple prompt:
 Use my Reah card to buy a Claude subscription for yourself.
 ```
 
-That's it. After setup, the agent can use your configured keys to retrieve and use card info automatically.
+That's it. The agent should ask for manual confirmation before every key read and remind the user to rotate keys periodically.
 
 ---
 

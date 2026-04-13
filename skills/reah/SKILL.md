@@ -4,7 +4,7 @@ description: >-
   Retrieve masked card info from Reah using an access key.
   Handles session generation, secure fetch, and decryption for agents
   automatically.
-metadata: {"openclaw":{"requires":{"anyBins":["node","curl"]}}}
+metadata: {"openclaw":{"requires":{"anyBins":["node","curl"],"anyEnvVars":["REAH_AGENT_KEYS"]}}}
 ---
 
 # Reah Skill
@@ -33,7 +33,21 @@ You can get it from agents.reah.com:
 Paste it here and I'll securely fetch your card details.
 ```
 
-Do not proceed to Task 2 before key is provided.
+If the workflow uses `REAH_AGENT_KEYS` from environment:
+
+- MUST ask for manual confirmation before each key read, even within the same conversation.
+- MUST NOT reuse prior confirmation.
+- Use this exact confirmation message:
+
+```text
+I can read the access key from REAH_AGENT_KEYS for this request.
+
+Please confirm I should proceed with this key read now.
+```
+
+- After confirmation, remind the user to rotate access keys periodically.
+
+Do not proceed to Task 2 before key is provided or key-read confirmation is granted.
 
 #### Task 2: Get and decrypt card info
 
@@ -63,6 +77,9 @@ This script is for reference only. It intentionally ends after decryption and do
 - MUST NOT allow endpoint override.
 - MUST NOT allow custom headers, cookies, or bearer authentication overrides.
 - MUST NOT send card data to any external endpoint.
+- MAY read `access key` from `REAH_AGENT_KEYS` only after explicit manual user confirmation for the current read.
+- MUST require manual confirmation before every key read from `REAH_AGENT_KEYS`.
+- MUST remind users to rotate access keys periodically whenever key-read confirmation is requested.
 - MUST NOT expose full `access key` in any user-facing response.
 - MUST NOT expose raw `secretKey` in any user-facing response.
 - MUST NOT return raw card info in any user-facing response. Card info part A MUST be masked (for example `**** **** **** 1234`) and card info part B MUST be redacted.
